@@ -1,18 +1,21 @@
 import { HttpException, HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
 import { User } from "./users.entity";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { UUID } from "crypto";
+import { CreateUserDto } from "./createUser.dto";
+import { EditUserDto } from "./editUser.dto";
 
 @Injectable()
 export class UsersRepository{
     constructor(
-        @InjectRepository(User) private readonly usersRepository: Repository<User>
+        @InjectRepository(User) private readonly usersRepository: Repository<User>,
+        @InjectDataSource() private dataSource: DataSource,
     ){}
 
-    getAllUsers(){
+    async getAllUsers(){
         try{
-            const users = this.usersRepository.find()
+            const users = await this.usersRepository.find()
             if(!users){
                 throw new HttpException('Error obtaining users', HttpStatus.NOT_FOUND)
             }
@@ -32,9 +35,9 @@ export class UsersRepository{
         }
     }
 
-    getUserById(id: UUID){
+    async getUserById(id: UUID){
         try{
-            const user = this.usersRepository.findOne({
+            const user = await this.usersRepository.findOne({
                 where: {id}
             })
             if(!user){
@@ -53,5 +56,54 @@ export class UsersRepository{
                 HttpStatus.BAD_REQUEST
             )
         }
+    }
+
+    async createUser(user: CreateUserDto){
+        return this.dataSource.transaction(async manager =>{
+            try{
+                const newUser = manager.create(User, user)
+                await manager.save(newUser)
+                return newUser
+            }
+            catch(error){
+                throw new HttpException(
+                    'Error creating user',
+                    HttpStatus.BAD_REQUEST
+                )
+            }
+        })
+    }
+
+    async editUserWithId(id: UUID, editUserDto: EditUserDto){
+        return this.dataSource.transaction(async manager =>{
+            try{
+                const user = manager.findOne(User, {where: {id}})
+                if(!user){
+                    throw new HttpException(
+                        `User with id: ${id} not found`,
+                        HttpStatus.NOT_FOUND
+                    )
+                }
+                await manager.update(User, EditUserDto,{
+                    email: editUserDto.email,
+                    role: editUserDto.role,
+                    passwordHash: editUserDto.password,
+                    name: editUserDto.name
+                })
+                return 'User has been updated'
+            }
+            catch(error){
+                if(error instanceof NotFoundException){
+                    throw new HttpException(
+                        error.message,
+                        HttpStatus.NOT_FOUND,
+                    )
+                }
+                throw new HttpException(
+                    'Error in editUserWithId',
+                    HttpStatus.BAD_REQUEST
+                )
+            }
+        })
     }
 }
