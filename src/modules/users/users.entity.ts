@@ -8,7 +8,7 @@ import { ProductReview } from '../products/entities/product-review.entity';
 import { Notification } from '../notifications/notifications.entity';
 import { UserRole } from 'src/enums/user.enum';
 
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;

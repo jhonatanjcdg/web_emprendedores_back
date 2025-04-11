@@ -77,19 +77,15 @@ export class UsersRepository{
     async editUserWithId(id: UUID, editUserDto: EditUserDto){
         return this.dataSource.transaction(async manager =>{
             try{
-                const user = manager.findOne(User, {where: {id}})
+                const user = await manager.findOne(User, {where: {id}})
                 if(!user){
                     throw new HttpException(
                         `User with id: ${id} not found`,
                         HttpStatus.NOT_FOUND
                     )
                 }
-                await manager.update(User, EditUserDto,{
-                    email: editUserDto.email,
-                    role: editUserDto.role,
-                    passwordHash: editUserDto.password,
-                    name: editUserDto.name
-                })
+                manager.merge(User, user, editUserDto)
+                await manager.save(User)
                 return 'User has been updated'
             }
             catch(error){
