@@ -18,15 +18,19 @@ export class UsersService{
         return this.usersRepository.getUserById(id)
     }
 
+    getUserByEmail(email: string){
+        return this.usersRepository.getUserByEmail(email)
+    }
+
     createUser(user: CreateUserDto){
         return this.usersRepository.createUser(user)
     }
 
     editUserWithId(id: UUID, editUserDto: EditUserDto){
-        return this.editUserWithId(id, editUserDto)
+        return this.usersRepository.editUserWithId(id, editUserDto)
     }
 
     deleteUserWithId(id: UUID){
-        
+        return this.usersRepository.deleteUserWithId(id)
     }
 }

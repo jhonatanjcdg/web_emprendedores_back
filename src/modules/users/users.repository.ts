@@ -58,6 +58,30 @@ export class UsersRepository{
         }
     }
 
+    async getUserByEmail(email: string){
+        try{
+            const user = await this.usersRepository.findOne({
+                where: {email}
+            })
+            if(!user){
+                throw new HttpException(
+                    `User with email: ${email} not found`,
+                    HttpStatus.NOT_FOUND
+                )
+            }
+            return user
+        }
+        catch(error){
+            if(error instanceof NotFoundException){
+                throw new HttpException(error.message, HttpStatus.NOT_FOUND)
+            }
+            throw new HttpException(
+                'Bad request in getUserByEmail',
+                HttpStatus.BAD_REQUEST
+            )
+        }
+    }
+
     async createUser(user: CreateUserDto){
         return this.dataSource.transaction(async manager =>{
             try{
@@ -97,6 +121,34 @@ export class UsersRepository{
                 }
                 throw new HttpException(
                     'Error in editUserWithId',
+                    HttpStatus.BAD_REQUEST
+                )
+            }
+        })
+    }
+
+    async deleteUserWithId(id: UUID){
+        return this.dataSource.transaction(async manager => {
+            try{
+                const user = manager.findOne(User, {
+                    where: {id}
+                })
+                if(!user){
+                    throw new HttpException(
+                        `User with id: ${id} not found`,
+                        HttpStatus.NOT_FOUND
+                    )
+                }
+                await manager.delete(User, {id})
+
+                return 'User deleted'
+            }
+            catch(error){
+                if(error instanceof NotFoundException){
+                    throw new HttpException(error.message, HttpStatus.NOT_FOUND)
+                }
+                throw new HttpException(
+                    'Error deleting user in deleteUserWithId',
                     HttpStatus.BAD_REQUEST
                 )
             }

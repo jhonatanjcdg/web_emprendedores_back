@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { UUID } from "crypto";
 import { UsersService } from "./users.service";
 import { CreateUserDto } from "./createUser.dto";
@@ -17,21 +17,26 @@ export class UsersController{
 
     @Get(':id')
     getUserById(@Param('id') id: UUID){
-        return this.getUserById(id)
+        return this.usersService.getUserById(id)
+    }
+    
+    @Get('email')
+    getUserByEmail(@Query() email: string){
+        return this.usersService.getUserByEmail(email)
     }
 
     @Post()
     createUser(@Body() user: CreateUserDto){
-        return this.createUser(user)
+        return this.usersService.createUser(user)
     }
 
     @Put()
     editUserWithId(@Param('id') id: UUID, @Body() editUserDto: EditUserDto){
-        return this.editUserWithId(id, editUserDto)
+        return this.usersService.editUserWithId(id, editUserDto)
     }
 
     @Delete()
     deleteUserWithId(@Param('id') id: UUID){
-
+        return this.usersService.deleteUserWithId(id)
     }
 }
